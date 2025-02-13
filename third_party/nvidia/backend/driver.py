@@ -1,5 +1,5 @@
 import functools
-import os
+import os, time, sys, pathlib, traceback
 import hashlib
 import subprocess
 import tempfile
@@ -50,8 +50,10 @@ def compile_module_from_src(src, name):
     cache = get_cache_manager(key)
     cache_path = cache.get_file(f"{name}.so")
     if cache_path is None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            src_path = os.path.join(tmpdir, "main.c")
+        # with tempfile.TemporaryDirectory() as tmpdir:
+        if True:
+            tmpdir = os.path.join(str(pathlib.Path.home()), ".triton/cache")
+            src_path = os.path.join(tmpdir, f"main.{int(time.time()*10E7)}.c")
             with open(src_path, "w") as f:
                 f.write(src)
             so = _build(name, src_path, tmpdir, library_dirs(), include_dir, libraries)
@@ -362,6 +364,10 @@ class CudaLauncher(object):
         self.launch = mod.launch
 
     def __call__(self, *args, **kwargs):
+        # Debug
+        traceback.print_stack()
+      
+        # 这里将接入 .c 中的 static PyObject* launch(PyObject* self, PyObject* args)
         self.launch(*args, **kwargs)
 
 

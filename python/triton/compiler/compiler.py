@@ -14,7 +14,7 @@ from .code_generator import ast_to_ttir
 from pathlib import Path
 import re
 import functools
-import os
+import os,sys
 
 
 @dataclass
@@ -100,6 +100,10 @@ class ASTSource:
             self.constants = dict()
         if self.attrs is None:
             self.attrs = AttrsDescriptor()
+            
+        print(f"{__file__}:{sys._getframe().f_lineno} signature = {signature}")
+        print(f"{__file__}:{sys._getframe().f_lineno} constants = {constants}")
+        print(f"{__file__}:{sys._getframe().f_lineno} attrs     = {attrs}")
 
     def hash(self):
         sorted_sig = [v for k, v in sorted(self.signature.items())]

@@ -3,7 +3,7 @@ import ast
 import hashlib
 import inspect
 import itertools
-import os
+import os, sys
 import re
 import textwrap
 from collections import defaultdict
@@ -686,8 +686,12 @@ class JITFunction(KernelInterface[T]):
             grid_1 = grid[1] if grid_size > 1 else 1
             grid_2 = grid[2] if grid_size > 2 else 1
 
-            # launch kernel
             launch_metadata = kernel.launch_metadata(grid, stream, *non_constexpr_vals)
+            
+            print(f"{__file__}:{sys._getframe().f_lineno} launch_metadata = {launch_metadata}")
+            print(f"{__file__}:{sys._getframe().f_lineno} kernel.packed_metadata = {kernel.packed_metadata}")
+
+            # launch kernel
             kernel.run(grid_0, grid_1, grid_2, stream, kernel.function, kernel.packed_metadata, launch_metadata,
                        self.CompiledKernel.launch_enter_hook, self.CompiledKernel.launch_exit_hook, *non_constexpr_vals)
         return kernel

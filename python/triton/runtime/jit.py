@@ -625,8 +625,9 @@ class JITFunction(KernelInterface[T]):
             # Kernel is not cached; we have to compile.
             target = driver.active.get_current_target()
             backend = self.make_backend(target)
+            print(f"{__file__}:{sys._getframe().f_lineno} kwargs = {kwargs}")
             options = backend.parse_options(kwargs)
-
+            print(f"{__file__}:{sys._getframe().f_lineno} options = backend.parse_options(kwargs) = {options}")
             # deprecated arguments
             assert "device_type" not in kwargs, "device_type option is deprecated; current target will be used"
             assert "device" not in kwargs, "device option is deprecated; current device will be used"

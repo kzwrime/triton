@@ -14,7 +14,7 @@ from .code_generator import ast_to_ttir
 from pathlib import Path
 import re
 import functools
-import os,sys
+import os,sys,traceback
 
 
 @dataclass
@@ -228,10 +228,14 @@ def filter_traceback(e: BaseException):
 
 
 def compile(src, target=None, options=None):
+    print(f"{__file__}:{sys._getframe().f_lineno} options = {options}")
+    print(f"{__file__}:{sys._getframe().f_lineno} target = {target}")
     if target is None:
         target = driver.active.get_current_target()
+    print(f"{__file__}:{sys._getframe().f_lineno} target = {target}")
     assert isinstance(target, GPUTarget), "target must be of GPUTarget type"
     backend = make_backend(target)
+    print(f"{__file__}:{sys._getframe().f_lineno} backend = {backend}")
     ir_source = not isinstance(src, ASTSource)
     # create backend
     if ir_source:
@@ -239,6 +243,7 @@ def compile(src, target=None, options=None):
         src = IRSource(src)
     extra_options = src.parse_options()
     options = backend.parse_options(dict(options or dict(), **extra_options))
+    print(f"{__file__}:{sys._getframe().f_lineno} options = {options}")
     # create cache manager
     env_vars = get_cache_invalidating_env_vars()
     key = f"{triton_key()}-{src.hash()}-{backend.hash()}-{options.hash()}-{str(sorted(env_vars.items()))}"
@@ -252,7 +257,9 @@ def compile(src, target=None, options=None):
     fn_dump_manager = get_dump_manager(src.hash()) if enable_ir_dump else None
     metadata_filename = f"{src.name}.json"
     metadata_group = fn_cache_manager.get_group(metadata_filename) or {}
+    print(f"{__file__}:{sys._getframe().f_lineno} metadata_group = {metadata_group}")
     metadata_path = metadata_group.get(metadata_filename)
+    print(f"{__file__}:{sys._getframe().f_lineno} metadata_path = {metadata_path}")
     always_compile = os.environ.get("TRITON_ALWAYS_COMPILE", "0") == "1"
     if not always_compile and metadata_path is not None:
         # cache hit!
@@ -338,8 +345,11 @@ class CompiledKernel:
     launch_exit_hook = None
 
     def __init__(self, src, metadata_group, hash):
+        traceback.print_stack()
         from collections import namedtuple
         metadata_path = next((Path(p) for c, p in metadata_group.items() if c.endswith(".json")))
+        print(f"{__file__}:{sys._getframe().f_lineno} metadata_group = {metadata_group}")
+        print(f"{__file__}:{sys._getframe().f_lineno} metadata_path = {metadata_path}")
         metadata = json.loads(metadata_path.read_text())
         metadata['cluster_dims'] = tuple(metadata['cluster_dims'])
         # JSON serialization dumps the target as a dict. Restore it to a GPUTarget.
@@ -349,6 +359,9 @@ class CompiledKernel:
         self.metadata = KernelMetadata(**metadata)
         backend = make_backend(self.metadata.target)
         self.packed_metadata = backend.pack_metadata(self.metadata)
+        print(f"{__file__}:{sys._getframe().f_lineno} backend = make_backend(self.metadata.target) = {backend}")
+        print(f"{__file__}:{sys._getframe().f_lineno} metadata = {self.metadata}")
+        print(f"{__file__}:{sys._getframe().f_lineno} backend.pack_metadata(self.metadata) = {self.packed_metadata}")
         self.src = src
         self.hash = hash
         self.name = self.metadata.name

@@ -242,6 +242,7 @@ def aot_compile(
         raise RuntimeError("AOT compiling kernels with global scratch requirements is not yet implemented")
 
     sig_hash = ccinfo.hash
+    constants = ccinfo.src.constants
 
     constexpr_indices = [i for (i, p) in enumerate(kernel_jit_func.params) if p.is_constexpr]
     constexpr_indices = set(constexpr_indices)
@@ -284,9 +285,9 @@ def aot_compile(
     else:
         ptx = "// no ptx"
 
-    const_sig = 'x'.join([str(v) for v in ccinfo.src.constants.values()])
+    const_sig = 'x'.join([str(v) for v in constants.values()])
     meta_sig = f"warps{num_warps}xstages{num_stages}"
-    doc_string = [f"{kernel_jit_func.arg_names[k[0]]}={v}" for k, v in ccinfo.src.constants.items()]
+    doc_string = [f"{kernel_jit_func.arg_names[k[0]]}={v}" for k, v in constants.items()]
     doc_string += [f"num_warps={num_warps}", f"num_stages={num_stages}"]
 
     func_name = '_'.join([out_name, sig_hash, suffix])
@@ -302,7 +303,7 @@ def aot_compile(
         "constexpr": "; ".join(
             [
                 f"{ty_to_cpp(constant_to_ty(constval))}, {kernel_jit_func.arg_names[vi[0]]}, {constant_to_cstr(constval)}"
-                for vi, constval in ccinfo.src.constants.items()
+                for vi, constval in constants.items()
                 if type(constval) in accept_constant_types and vi[0] in constexpr_indices
             ] + [f"int, num_warps, {num_warps}", f"int, num_stages, {num_stages}"]),
         "arg_pointers": ", ".join([f"&{arg}" for arg in arg_names_not_1] + ["&global_scratch"]),

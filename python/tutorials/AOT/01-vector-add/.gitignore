@@ -1,0 +1,5 @@
+add_kernel.c
+add_kernel.h
+kernels
+*.out
+*.o

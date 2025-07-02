@@ -45,7 +45,9 @@ struct DotOpConversion : public ConvertOpToLLVMPattern<triton::DotOp> {
         cast<RankedTensorType>(D.getType()).getEncoding());
     if (!isOuter && mmaLayout && supportMMA(op, mmaLayout.getVersionMajor())) {
       if (mmaLayout.getVersionMajor() == 2) {
-        bool isHopperF64 = computeCapability == 90 && cast<RankedTensorType>(A.getType()).getElementType().isF64();
+        bool isHopperF64 =
+            computeCapability == 90 &&
+            cast<RankedTensorType>(A.getType()).getElementType().isF64();
         return convertMMA(op, adaptor, getTypeConverter(), rewriter,
                           mmaLayout.isTuring(), isHopperF64);
       }
@@ -161,8 +163,7 @@ struct WarpGroupDotWaitOpConversion
 
 void mlir::triton::NVIDIA::populateDotOpToLLVMPatterns(
     LLVMTypeConverter &typeConverter, RewritePatternSet &patterns,
-    int computeCapability,
-    PatternBenefit benefit) {
+    int computeCapability, PatternBenefit benefit) {
   patterns.add<DotOpConversion>(typeConverter, computeCapability, benefit);
   patterns.add<WarpGroupDotOpConversion>(typeConverter, benefit);
   patterns.add<WarpGroupDotWaitOpConversion>(typeConverter, benefit);
